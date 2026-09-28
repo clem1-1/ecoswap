@@ -15,7 +15,8 @@ import { ECOSWAP_FACTORY_ABI } from '@/constants/contracts';
 import { addActivity } from '@/hooks/useActivity';
 import { buildTxExplorerUrl } from '@/onchain-facts';
 
-type Step = 'idle' | 'creating' | 'approving0' | 'approving1' | 'depositing' | 'done' | 'error';
+// Transfer-first deposit: step1 = transfer token0, step2 = transfer token1, step3 = mint
+type Step = 'idle' | 'creating' | 'transferring0' | 'transferring1' | 'depositing' | 'done' | 'error';
 
 interface CreatePoolTabProps {
   onPoolCreated?: (pairAddress: `0x${string}`) => void;
@@ -57,125 +58,81 @@ export default function CreatePoolTab({ onPoolCreated }: CreatePoolTabProps) {
   const { isSuccess: createConfirmed, data: createReceipt, isError: createFailed } =
     useWaitForTransactionReceipt({ hash: createTxHash });
 
-  const { writeContract: approve0Write, data: approve0Hash, isPending: approve0Pending } =
-    useWriteContract();
-  const { isSuccess: approve0Confirmed } = useWaitForTransactionReceipt({ hash: approve0Hash });
+  // transfer0: send token0 into the new pool
+  const { writeContract: transfer0Write, data: transfer0Hash, isPending: transfer0Pending } = useWriteContract();
+  const { isSuccess: transfer0Confirmed } = useWaitForTransactionReceipt({ hash: transfer0Hash });
 
-  const { writeContract: approve1Write, data: approve1Hash, isPending: approve1Pending } =
-    useWriteContract();
-  const { isSuccess: approve1Confirmed } = useWaitForTransactionReceipt({ hash: approve1Hash });
+  // transfer1: send token1 into the new pool
+  const { writeContract: transfer1Write, data: transfer1Hash, isPending: transfer1Pending } = useWriteContract();
+  const { isSuccess: transfer1Confirmed } = useWaitForTransactionReceipt({ hash: transfer1Hash });
 
-  const { writeContract: depositWrite, data: depositHash, isPending: depositPending } =
-    useWriteContract();
-  const { isSuccess: depositConfirmed, isError: depositFailed } = useWaitForTransactionReceipt({
-    hash: depositHash,
-  });
+  // mint: call pool.mint(user) after both tokens are in
+  const { writeContract: depositWrite, data: depositHash, isPending: depositPending } = useWriteContract();
+  const { isSuccess: depositConfirmed, isError: depositFailed } = useWaitForTransactionReceipt({ hash: depositHash });
 
-  // createPair confirmed → extract address, approve token0
+  // createPair confirmed → extract pair address → transfer token0 to pool
   useEffect(() => {
     if (!createConfirmed || !createReceipt || step !== 'creating') return;
-    const PAIR_CREATED_TOPIC =
-      '0x0d3648bd0f6ba80134a33ba9275ac585d9d315f0ad8355cddefde31afa28d0e9';
-    const log = createReceipt.logs?.find(
-      (l) => l.topics?.[0]?.toLowerCase() === PAIR_CREATED_TOPIC,
-    );
-    const pairAddr = log
-      ? (('0x' + log.data.slice(26, 66)) as `0x${string}`)
-      : undefined;
-    if (!pairAddr) return;
+    const PAIR_CREATED_TOPIC = '0x0d3648bd0f6ba80134a33ba9275ac585d9d315f0ad8355cddefde31afa28d0e9';
+    const log = createReceipt.logs?.find((l) => l.topics?.[0]?.toLowerCase() === PAIR_CREATED_TOPIC);
+    // pair address is the 3rd word in the log data (padded address)
+    const pairAddr = log ? (('0x' + log.data.slice(26, 66)) as `0x${string}`) : undefined;
+    if (!pairAddr) { setStep('error'); setErrorMsg('Could not find new pair address in receipt.'); return; }
     setNewPairAddress(pairAddr);
-    setStep('approving0');
-    addActivity({
-      type: 'create_pool',
-      description: `Created ${token0.symbol}/${token1.symbol} pool`,
-      txHash: createTxHash,
-      chainId: ARC_TESTNET_CHAIN_ID,
-      explorerBase: 'https://explorer.testnet.arc.io',
-    });
+    addActivity({ type: 'create_pool', description: `Created ${token0.symbol}/${token1.symbol} pool`, txHash: createTxHash, chainId: ARC_TESTNET_CHAIN_ID, explorerBase: 'https://explorer.testnet.arc.io' });
     if (parsed0 > 0n) {
-      approve0Write({
-        address: token0.address as `0x${string}`,
-        abi: erc20Abi,
-        functionName: 'approve',
-        args: [pairAddr, parsed0],
-        chainId: ARC_TESTNET_CHAIN_ID,
-      });
+      setStep('transferring0');
+      transfer0Write({ address: token0.address as `0x${string}`, abi: erc20Abi, functionName: 'transfer', args: [pairAddr, parsed0], chainId: ARC_TESTNET_CHAIN_ID });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createConfirmed, createReceipt]);
 
   useEffect(() => {
-    if (createFailed && step === 'creating') {
-      setStep('error');
-      setErrorMsg('Failed to create pool. Please try again.');
-    }
+    if (createFailed && step === 'creating') { setStep('error'); setErrorMsg('Failed to create pool. Please try again.'); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createFailed]);
 
-  // approve0 confirmed → approve1
+  // transfer0 confirmed → transfer token1 to pool
   useEffect(() => {
-    if (!approve0Confirmed || step !== 'approving0' || !newPairAddress) return;
-    setStep('approving1');
+    if (!transfer0Confirmed || step !== 'transferring0' || !newPairAddress) return;
     if (parsed1 > 0n) {
-      approve1Write({
-        address: token1.address as `0x${string}`,
-        abi: erc20Abi,
-        functionName: 'approve',
-        args: [newPairAddress, parsed1],
-        chainId: ARC_TESTNET_CHAIN_ID,
-      });
+      setStep('transferring1');
+      transfer1Write({ address: token1.address as `0x${string}`, abi: erc20Abi, functionName: 'transfer', args: [newPairAddress, parsed1], chainId: ARC_TESTNET_CHAIN_ID });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [approve0Confirmed]);
+  }, [transfer0Confirmed]);
 
-  // approve1 confirmed → deposit (mint)
+  // transfer1 confirmed → call mint
   useEffect(() => {
-    if (!approve1Confirmed || step !== 'approving1' || !newPairAddress || !address) return;
+    if (!transfer1Confirmed || step !== 'transferring1' || !newPairAddress || !address) return;
     setStep('depositing');
     depositWrite({
       address: newPairAddress,
-      abi: [
-        {
-          inputs: [{ internalType: 'address', name: 'to', type: 'address' }],
-          name: 'mint',
-          outputs: [{ internalType: 'uint256', name: 'liquidity', type: 'uint256' }],
-          stateMutability: 'nonpayable',
-          type: 'function',
-        },
-      ] as const,
+      abi: [{ inputs: [{ internalType: 'address', name: 'to', type: 'address' }], name: 'mint', outputs: [{ internalType: 'uint256', name: 'liquidity', type: 'uint256' }], stateMutability: 'nonpayable', type: 'function' }] as const,
       functionName: 'mint',
       args: [address],
       chainId: ARC_TESTNET_CHAIN_ID,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [approve1Confirmed]);
+  }, [transfer1Confirmed]);
 
-  // deposit confirmed → done
+  // mint confirmed → done
   useEffect(() => {
     if (!depositConfirmed || !depositHash || step !== 'depositing') return;
     setStep('done');
     setLastTxHash(depositHash);
-    addActivity({
-      type: 'add_liquidity',
-      description: `Added initial liquidity to ${token0.symbol}/${token1.symbol} pool`,
-      txHash: depositHash,
-      chainId: ARC_TESTNET_CHAIN_ID,
-      explorerBase: 'https://explorer.testnet.arc.io',
-    });
+    addActivity({ type: 'add_liquidity', description: `Added initial liquidity to ${token0.symbol}/${token1.symbol} pool`, txHash: depositHash, chainId: ARC_TESTNET_CHAIN_ID, explorerBase: 'https://explorer.testnet.arc.io' });
     if (newPairAddress && onPoolCreated) onPoolCreated(newPairAddress);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [depositConfirmed, depositHash]);
 
   useEffect(() => {
-    if (depositFailed && step === 'depositing') {
-      setStep('error');
-      setErrorMsg('Failed to deposit liquidity.');
-    }
+    if (depositFailed && step === 'depositing') { setStep('error'); setErrorMsg('Failed to mint LP tokens.'); }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [depositFailed]);
 
   const isWrongChain = chainId !== ARC_TESTNET_CHAIN_ID;
-  const isProcessing = ['creating', 'approving0', 'approving1', 'depositing'].includes(step);
+  const isProcessing = ['creating', 'transferring0', 'transferring1', 'depositing'].includes(step);
 
   const handleCreate = () => {
     if (!factory) return;
@@ -191,22 +148,22 @@ export default function CreatePoolTab({ onPoolCreated }: CreatePoolTabProps) {
 
   const steps = [
     {
-      label: 'Create pool',
+      label: 'Create pool contract',
       active: step === 'creating' || createPending,
-      done: ['approving0', 'approving1', 'depositing', 'done'].includes(step),
+      done: ['transferring0', 'transferring1', 'depositing', 'done'].includes(step),
     },
     {
-      label: `Approve ${token0.symbol}`,
-      active: step === 'approving0' || approve0Pending,
-      done: ['approving1', 'depositing', 'done'].includes(step),
+      label: `Send ${token0.symbol} to pool`,
+      active: step === 'transferring0' || transfer0Pending,
+      done: ['transferring1', 'depositing', 'done'].includes(step),
     },
     {
-      label: `Approve ${token1.symbol}`,
-      active: step === 'approving1' || approve1Pending,
+      label: `Send ${token1.symbol} to pool`,
+      active: step === 'transferring1' || transfer1Pending,
       done: ['depositing', 'done'].includes(step),
     },
     {
-      label: 'Deposit liquidity',
+      label: 'Mint LP tokens',
       active: step === 'depositing' || depositPending,
       done: step === 'done',
     },

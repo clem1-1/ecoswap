@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 
 type Theme = 'light' | 'dark';
-
 const STORAGE_KEY = 'ecoswap-theme';
 
 function getInitialTheme(): Theme {
-  if (typeof window === 'undefined') return 'light';
+  if (typeof window === 'undefined') return 'dark';
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === 'dark' || stored === 'light') return stored;
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -20,6 +19,5 @@ export function useTheme() {
   }, [theme]);
 
   const toggle = () => setTheme((t) => (t === 'light' ? 'dark' : 'light'));
-
   return { theme, toggle };
 }
