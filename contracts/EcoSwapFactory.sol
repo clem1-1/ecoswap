@@ -32,7 +32,8 @@ contract EcoSwapFactory {
         require(token0 != address(0), "EcoSwap: ZERO_ADDRESS");
         require(getPair[token0][token1] == address(0), "EcoSwap: PAIR_EXISTS");
 
-        bytes32 salt = bytes32(0);
+        // Unique salt per pair so each pool gets a deterministic but distinct address
+        bytes32 salt = keccak256(abi.encodePacked(token0, token1));
         pair = address(new EcoSwapPool{salt: salt}());
         EcoSwapPool(pair).initialize(token0, token1);
 

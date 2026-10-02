@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PlusCircle, ArrowRight, Loader2, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSwitchChain } from 'wagmi';
-import { erc20Abi, parseUnits } from 'viem';
+import { erc20Abi, parseUnits, decodeEventLog } from 'viem';
 import TokenSelector, { TokenIcon } from './TokenSelector';
 import { FEATURED_TOKENS, type Token } from '@/constants/tokens';
 import {
@@ -73,10 +73,21 @@ export default function CreatePoolTab({ onPoolCreated }: CreatePoolTabProps) {
   // createPair confirmed → extract pair address → transfer token0 to pool
   useEffect(() => {
     if (!createConfirmed || !createReceipt || step !== 'creating') return;
-    const PAIR_CREATED_TOPIC = '0x0d3648bd0f6ba80134a33ba9275ac585d9d315f0ad8355cddefde31afa28d0e9';
-    const log = createReceipt.logs?.find((l) => l.topics?.[0]?.toLowerCase() === PAIR_CREATED_TOPIC);
-    // pair address is the 3rd word in the log data (padded address)
-    const pairAddr = log ? (('0x' + log.data.slice(26, 66)) as `0x${string}`) : undefined;
+    // Decode PairCreated event using ABI to reliably extract the pair address
+    let pairAddr: `0x${string}` | undefined;
+    for (const log of createReceipt.logs ?? []) {
+      try {
+        const decoded = decodeEventLog({
+          abi: ECOSWAP_FACTORY_ABI,
+          data: log.data,
+          topics: log.topics,
+        });
+        if (decoded.eventName === 'PairCreated') {
+          pairAddr = (decoded.args as { pair: `0x${string}` }).pair;
+          break;
+        }
+      } catch { /* not this log */ }
+    }
     if (!pairAddr) { setStep('error'); setErrorMsg('Could not find new pair address in receipt.'); return; }
     setNewPairAddress(pairAddr);
     addActivity({ type: 'create_pool', description: `Created ${token0.symbol}/${token1.symbol} pool`, txHash: createTxHash, chainId: ARC_TESTNET_CHAIN_ID, explorerBase: 'https://explorer.testnet.arc.io' });
