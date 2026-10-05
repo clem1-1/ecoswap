@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Zap, DollarSign, Leaf, ExternalLink, Twitter, MessageCircle } from 'lucide-react';
-import { useAllPairsLength } from '@/hooks/useEcoSwap';
-import { useActivity } from '@/hooks/useActivity';
+import { ArrowRight, Zap, DollarSign, Leaf, ExternalLink, Twitter, MessageCircle, ShieldCheck } from 'lucide-react';
 
 /* ── Animated logo hero ── */
 function AnimatedLogo() {
@@ -72,26 +70,27 @@ function FadeSection({ children, delay = 0 }: { children: React.ReactNode; delay
   );
 }
 
-/* ── Live stats strip ── */
+/* ── Highlights strip — no numeric counts ── */
 function StatsStrip() {
-  const { length: poolCount } = useAllPairsLength();
-  const { items } = useActivity();
-  const swapCount = items.filter((i) => i.type === 'swap').length;
-
-  const stats = [
-    poolCount > 0 && { label: 'Pools', value: poolCount.toString() },
-    swapCount > 0 && { label: 'Swaps (session)', value: swapCount.toString() },
-    { label: 'Network', value: 'Arc Testnet' },
-    { label: 'Gas token', value: 'USDC' },
-  ].filter(Boolean) as { label: string; value: string }[];
-
+  const highlights = [
+    { icon: <ShieldCheck size={15} />, label: 'Permissionless' },
+    { icon: <svg width="15" height="15" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="13" fill="#0F9D6B"/><path d="M24 13 C19.5 17.5 17.5 22 19.5 26.5 C21.5 31 27.5 31 29.5 26.5 C31.5 22 28 15.5 24 13Z" fill="white" opacity="0.95"/></svg>, label: 'Arc Testnet' },
+    { icon: <DollarSign size={15} />, label: 'USDC Gas' },
+  ];
   return (
-    <div className="flex flex-wrap justify-center gap-6">
-      {stats.map((s) => (
-        <div key={s.label} className="text-center">
-          <div className="font-extrabold text-2xl tabular" style={{ color: 'var(--accent)', fontVariantNumeric: 'tabular-nums' }}>{s.value}</div>
-          <div className="text-xs mt-0.5" style={{ color: 'var(--muted)' }}>{s.label}</div>
-        </div>
+    <div className="flex flex-wrap justify-center gap-3">
+      {highlights.map((h) => (
+        <span
+          key={h.label}
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold"
+          style={{
+            background: 'rgba(15,157,107,0.10)',
+            border: '1px solid rgba(15,157,107,0.20)',
+            color: 'var(--accent)',
+          }}
+        >
+          {h.icon}{h.label}
+        </span>
       ))}
     </div>
   );
@@ -104,8 +103,14 @@ interface LandingPageProps {
 export default function LandingPage({ onLaunch }: LandingPageProps) {
   return (
     <div className="min-h-dvh flex flex-col relative overflow-hidden" style={{ background: 'var(--bg-gradient)' }}>
-      {/* Ambient glows */}
+      {/* Ambient glows — stronger hero glow */}
       <div className="ambient-bg" aria-hidden="true" />
+      <div aria-hidden="true" style={{
+        position: 'fixed', top: '15%', left: '50%', transform: 'translateX(-50%)',
+        width: 520, height: 320, borderRadius: '50%',
+        background: 'radial-gradient(ellipse at center, rgba(15,157,107,0.18) 0%, rgba(20,184,166,0.10) 40%, transparent 70%)',
+        filter: 'blur(40px)', pointerEvents: 'none', zIndex: 0,
+      }} />
 
       {/* Testnet notice */}
       <div className="relative z-10 flex justify-center pt-4 px-4">
@@ -163,9 +168,27 @@ export default function LandingPage({ onLaunch }: LandingPageProps) {
       <section className="relative z-10 px-4 py-16">
         <div className="max-w-3xl mx-auto">
           <FadeSection>
-            <h2 className="text-center font-extrabold text-2xl tracking-tight mb-10" style={{ color: 'var(--ink)' }}>
-              Built for the Arc Ecosystem
-            </h2>
+            <div className="text-center mb-10">
+              <h2 className="font-extrabold text-2xl tracking-tight mb-3" style={{ color: 'var(--ink)' }}>
+                Built for the Arc Ecosystem
+              </h2>
+              <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
+                {[
+                  { name: 'Arc', color: '#14B8A6' },
+                  { name: 'USDC', color: '#2775CA' },
+                  { name: 'EURC', color: '#0052B4' },
+                ].map((p) => (
+                  <span
+                    key={p.name}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold"
+                    style={{ background: `${p.color}18`, border: `1px solid ${p.color}33`, color: p.color }}
+                  >
+                    <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
+                    {p.name}
+                  </span>
+                ))}
+              </div>
+            </div>
           </FadeSection>
           <div className="grid sm:grid-cols-3 gap-4">
             {[

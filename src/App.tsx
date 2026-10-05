@@ -4,6 +4,7 @@ import {
   ArrowLeftRight, Droplets, Clock,
   Sun, Moon, Wallet, BarChart3, BookOpen,
   Twitter, MessageCircle, ExternalLink, ChevronDown, Leaf, Trophy, Map,
+  MoreHorizontal, Gift,
 } from 'lucide-react';
 import SwapTab from '@/components/SwapTab';
 import PoolsTab from '@/components/PoolsTab';
@@ -24,16 +25,21 @@ import { useAccount } from 'wagmi';
 
 type Tab = 'swap' | 'pools' | 'create' | 'liquidity' | 'activity' | 'faucet' | 'portfolio' | 'stats' | 'faq' | 'rewards' | 'quests';
 
+// Primary nav — always visible in top bar
 const NAV_TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'swap',      label: 'Swap',      icon: <ArrowLeftRight size={14} /> },
   { id: 'pools',     label: 'Pools',     icon: <Droplets size={14} /> },
-  { id: 'activity',  label: 'Activity',  icon: <Clock size={14} /> },
   { id: 'portfolio', label: 'Portfolio', icon: <Wallet size={14} /> },
-  { id: 'faucet',    label: 'Faucet',    icon: <Droplets size={14} /> },
-  { id: 'quests',    label: 'Quests',    icon: <Map size={14} /> },
-  { id: 'rewards',   label: 'Rewards',   icon: <Trophy size={14} /> },
-  { id: 'stats',     label: 'Stats',     icon: <BarChart3 size={14} /> },
-  { id: 'faq',       label: 'Docs',      icon: <BookOpen size={14} /> },
+  { id: 'activity',  label: 'Activity',  icon: <Clock size={14} /> },
+];
+
+// "More" dropdown items
+const MORE_TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
+  { id: 'faucet',  label: 'Faucet',  icon: <Gift size={14} /> },
+  { id: 'quests',  label: 'Quests',  icon: <Map size={14} /> },
+  { id: 'rewards', label: 'Rewards', icon: <Trophy size={14} /> },
+  { id: 'stats',   label: 'Stats',   icon: <BarChart3 size={14} /> },
+  { id: 'faq',     label: 'Docs',    icon: <BookOpen size={14} /> },
 ];
 
 const BOTTOM_TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
@@ -91,6 +97,8 @@ export default function App() {
   const [selectedPool, setSelectedPool] = useState<`0x${string}` | undefined>();
   const { theme, toggle } = useTheme();
   const [walletMenuOpen, setWalletMenuOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreActive = MORE_TABS.some((t) => t.id === tab);
   const { address } = useAccount();
 
   useEffect(() => {
@@ -143,7 +151,7 @@ export default function App() {
           </div>
         </button>
 
-        {/* Center nav */}
+        {/* Center nav — 4 primary tabs + More dropdown */}
         <nav className="hidden md:flex items-center gap-0.5" role="tablist">
           {NAV_TABS.map((t) => {
             const active = tab === t.id;
@@ -152,7 +160,7 @@ export default function App() {
                 key={t.id}
                 role="tab"
                 aria-selected={active}
-                onClick={() => setTab(t.id)}
+                onClick={() => { setTab(t.id); setMoreOpen(false); }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold transition-all relative"
                 style={{
                   color: active ? 'var(--ink)' : 'var(--muted)',
@@ -169,6 +177,54 @@ export default function App() {
               </button>
             );
           })}
+
+          {/* More dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setMoreOpen((v) => !v)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-semibold transition-all relative"
+              style={{
+                color: moreActive ? 'var(--ink)' : 'var(--muted)',
+                background: moreActive || moreOpen ? 'var(--surface-strong)' : 'transparent',
+                border: moreActive || moreOpen ? '1px solid var(--border-strong)' : '1px solid transparent',
+              }}
+              aria-label="More pages"
+            >
+              <MoreHorizontal size={14} style={{ color: moreActive ? 'var(--accent)' : 'inherit' }} />
+              More
+              <ChevronDown size={11} style={{ opacity: 0.5, transform: moreOpen ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }} />
+              {moreActive && (
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 rounded-full" style={{ background: 'var(--accent)' }} />
+              )}
+            </button>
+            {moreOpen && (
+              <div
+                className="absolute left-0 top-full mt-2 rounded-2xl p-1 min-w-[148px] z-50"
+                style={{ background: 'var(--surface-strong)', border: '1px solid var(--border-strong)', boxShadow: 'var(--shadow-elevated)' }}
+                onMouseLeave={() => setMoreOpen(false)}
+              >
+                {MORE_TABS.map((t) => {
+                  const active = tab === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => { setTab(t.id); setMoreOpen(false); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold text-left transition-colors"
+                      style={{
+                        color: active ? 'var(--accent)' : 'var(--ink-2)',
+                        background: active ? 'rgba(15,157,107,0.10)' : 'transparent',
+                      }}
+                      onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'var(--surface-hover)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = active ? 'rgba(15,157,107,0.10)' : 'transparent'; }}
+                    >
+                      <span style={{ color: active ? 'var(--accent)' : 'var(--muted)' }}>{t.icon}</span>
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Right controls */}
@@ -306,9 +362,19 @@ export default function App() {
               Explorer <ExternalLink size={10} className="ml-0.5" />
             </a>
           </div>
-          <div className="flex items-center gap-3">
-            <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="hover:opacity-70 transition-opacity" style={{ color: 'var(--subtle)' }}><Twitter size={14} /></a>
-            <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="hover:opacity-70 transition-opacity" style={{ color: 'var(--subtle)' }}><MessageCircle size={14} /></a>
+          <div className="flex items-center gap-4">
+            <a href="https://x.com/EcoSwapDEX" target="_blank" rel="noopener noreferrer"
+              aria-label="EcoSwap on X"
+              className="flex items-center gap-1.5 text-xs font-medium hover:opacity-80 transition-opacity"
+              style={{ color: 'var(--muted)' }}>
+              <Twitter size={13} /> <span className="hidden sm:inline">@EcoSwapDEX</span>
+            </a>
+            <a href="https://discord.gg/ecoswap" target="_blank" rel="noopener noreferrer"
+              aria-label="EcoSwap Discord"
+              className="flex items-center gap-1.5 text-xs font-medium hover:opacity-80 transition-opacity"
+              style={{ color: 'var(--muted)' }}>
+              <MessageCircle size={13} /> <span className="hidden sm:inline">Discord</span>
+            </a>
           </div>
         </div>
       </footer>

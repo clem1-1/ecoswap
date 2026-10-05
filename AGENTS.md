@@ -14,11 +14,12 @@ EcoSwap is a permissionless decentralized exchange (DEX) on Arc Testnet using a 
 
 | Contract | Address | Explorer |
 |---|---|---|
-| EcoSwapFactory | 0x2b1842274edbb625f4a8bf41ed21fc67a3909c07 | https://explorer.testnet.arc.io/address/0x2b1842274edbb625f4a8bf41ed21fc67a3909c07 |
+| EcoSwapFactory | 0x5f67e717C18d3bADeB543503C8b6933Be21f8447 | https://explorer.testnet.arc.io/address/0x5f67e717C18d3bADeB543503C8b6933Be21f8447 |
+| EcoSwapFactory (old, platform-owned) | 0x2b1842274edbb625f4a8bf41ed21fc67a3909c07 | deprecated — replaced by user-owned factory above |
 
 ## Environment
 
-- `VITE_ECOSWAP_FACTORY_ADDRESS=0x2b1842274edbb625f4a8bf41ed21fc67a3909c07` (in .env)
+- `VITE_ECOSWAP_FACTORY_ADDRESS=0x5f67e717C18d3bADeB543503C8b6933Be21f8447` (in .env) — user-owned, deployer: 0x4A10Ce45E8CbF38a30d1B066B52B4D3E4CFeb5e7
 
 ## Tech Stack
 

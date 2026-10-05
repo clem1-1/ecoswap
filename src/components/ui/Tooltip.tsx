@@ -8,7 +8,7 @@ interface TooltipProps {
 
 export function Tooltip({ text, children }: TooltipProps) {
   return (
-    <span className="tooltip-wrap cursor-help">
+    <span className="tooltip-wrap" style={{ cursor: children ? 'inherit' : 'help' }}>
       {children ?? <HelpCircle size={13} style={{ color: 'var(--muted)' }} />}
       <span className="tooltip-text">{text}</span>
     </span>

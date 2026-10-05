@@ -19,7 +19,7 @@ export function usePairAddress(tokenA?: string, tokenB?: string) {
     args: tokenA && tokenB
       ? [tokenA as `0x${string}`, tokenB as `0x${string}`]
       : undefined,
-    query: { enabled: !!factory && !!tokenA && !!tokenB },
+    query: { enabled: !!factory && !!tokenA && !!tokenB, refetchInterval: 15_000 },
     chainId: ARC_TESTNET_CHAIN_ID,
   });
   return { pairAddress: data, isLoading, refetch };
@@ -31,7 +31,7 @@ export function useAllPairsLength() {
     address: factory,
     abi: ECOSWAP_FACTORY_ABI,
     functionName: 'allPairsLength',
-    query: { enabled: !!factory },
+    query: { enabled: !!factory, refetchInterval: 30_000 },
     chainId: ARC_TESTNET_CHAIN_ID,
   });
   return { length: data ? Number(data) : 0, isLoading };
@@ -44,7 +44,7 @@ export function usePairAtIndex(index: number) {
     abi: ECOSWAP_FACTORY_ABI,
     functionName: 'allPairs',
     args: [BigInt(index)],
-    query: { enabled: !!factory },
+    query: { enabled: !!factory, refetchInterval: 30_000 },
     chainId: ARC_TESTNET_CHAIN_ID,
   });
   return { pairAddress: data, isLoading };
@@ -73,7 +73,7 @@ export function usePairInfo(pairAddress?: `0x${string}`) {
 
   const { data, isLoading } = useReadContracts({
     contracts,
-    query: { enabled: !!pairAddress },
+    query: { enabled: !!pairAddress, refetchInterval: 10_000 },
   });
 
   if (!data || !pairAddress) return { pairInfo: null, isLoading };
@@ -109,7 +109,7 @@ export function useTokenBalance(tokenAddress?: string, userAddress?: `0x${string
     abi: erc20Abi,
     functionName: 'balanceOf',
     args: userAddress ? [userAddress] : undefined,
-    query: { enabled: !!tokenAddress && !!userAddress },
+    query: { enabled: !!tokenAddress && !!userAddress, refetchInterval: 15_000 },
     chainId: ARC_TESTNET_CHAIN_ID,
   });
   return { balance: data, isLoading, refetch };
@@ -121,7 +121,7 @@ export function useTokenAllowance(tokenAddress?: string, owner?: `0x${string}`, 
     abi: erc20Abi,
     functionName: 'allowance',
     args: owner && spender ? [owner, spender] : undefined,
-    query: { enabled: !!tokenAddress && !!owner && !!spender },
+    query: { enabled: !!tokenAddress && !!owner && !!spender, refetchInterval: 15_000 },
     chainId: ARC_TESTNET_CHAIN_ID,
   });
   return { allowance: data, isLoading, refetch };
@@ -133,7 +133,7 @@ export function useLPBalance(pairAddress?: `0x${string}`, userAddress?: `0x${str
     abi: ECOSWAP_POOL_ABI,
     functionName: 'balanceOf',
     args: userAddress ? [userAddress] : undefined,
-    query: { enabled: !!pairAddress && !!userAddress },
+    query: { enabled: !!pairAddress && !!userAddress, refetchInterval: 15_000 },
     chainId: ARC_TESTNET_CHAIN_ID,
   });
   return { lpBalance: data, isLoading, refetch };

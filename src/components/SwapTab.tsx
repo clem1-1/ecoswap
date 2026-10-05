@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Settings, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, ExternalLink, Info } from 'lucide-react';
-import { RefreshCw } from 'lucide-react';
+import { Settings, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, ExternalLink, Info, ArrowUpDown, RefreshCw } from 'lucide-react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSwitchChain } from 'wagmi';
 import { erc20Abi, parseUnits, formatUnits } from 'viem';
 import TokenSelector, { TokenPill } from './TokenSelector';
@@ -182,26 +181,36 @@ export default function SwapTab({ onNavigate: _onNavigate }: { onNavigate?: (tab
     <div className="w-full">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
-        <div>
+        <div className="flex items-center gap-2.5 flex-wrap">
           <h2 className="font-extrabold text-xl tracking-tight" style={{ color: 'var(--ink)' }}>Swap</h2>
           {rate && (
-            <p className="text-xs mt-0.5 tabular" style={{ color: 'var(--muted)' }}>
+            <span
+              className="inline-flex items-center tabular text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
+              style={{
+                background: 'rgba(15,157,107,0.12)',
+                border: '1px solid rgba(15,157,107,0.22)',
+                color: 'var(--accent)',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
               1 {tokenIn.symbol} ≈ {rate} {tokenOut.symbol}
-            </p>
+            </span>
           )}
         </div>
-        <button
-          onClick={() => setShowSettings((s) => !s)}
-          className="w-9 h-9 flex items-center justify-center rounded-2xl transition-all"
-          style={{
-            background: showSettings ? 'var(--surface-hover)' : 'var(--surface-muted)',
-            border: '1px solid var(--border)',
-            color: showSettings ? 'var(--accent)' : 'var(--muted)',
-          }}
-          aria-label="Swap settings"
-        >
-          <Settings size={15} />
-        </button>
+        <Tooltip text="Transaction settings">
+          <button
+            onClick={() => setShowSettings((s) => !s)}
+            className="w-9 h-9 flex items-center justify-center rounded-2xl transition-all"
+            style={{
+              background: showSettings ? 'var(--surface-hover)' : 'var(--surface-muted)',
+              border: '1px solid var(--border)',
+              color: showSettings ? 'var(--accent)' : 'var(--muted)',
+            }}
+            aria-label="Transaction settings"
+          >
+            <Settings size={15} />
+          </button>
+        </Tooltip>
       </div>
 
       {/* Settings panel */}
@@ -288,6 +297,7 @@ export default function SwapTab({ onNavigate: _onNavigate }: { onNavigate?: (tab
             placeholder="0"
             value={amountIn}
             onChange={(e) => { setAmountIn(e.target.value); setPhase('idle'); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleButton(); }}
             className="flex-1 min-w-0 bg-transparent outline-none font-extrabold tabular"
             style={{ color: 'var(--ink)', fontSize: 'clamp(20px, 5vw, 32px)', fontVariantNumeric: 'tabular-nums', lineHeight: 1.1, width: 0 }}
           />
@@ -295,14 +305,20 @@ export default function SwapTab({ onNavigate: _onNavigate }: { onNavigate?: (tab
         </div>
       </div>
 
-      {/* Flip button */}
+      {/* Flip button — brand green, ArrowUpDown icon */}
       <div className="flex justify-center my-[-1px] relative z-10">
         <button
           onClick={handleFlip}
           className={`flip-btn ${flipped ? 'flipped' : ''}`}
           aria-label="Flip tokens"
+          style={{
+            background: 'var(--grad-btn)',
+            border: '2px solid var(--bg-card)',
+            color: '#fff',
+            boxShadow: '0 2px 12px rgba(15,157,107,0.35)',
+          }}
         >
-          <RefreshCw size={15} className="flip-icon" />
+          <ArrowUpDown size={15} className="flip-icon" />
         </button>
       </div>
 

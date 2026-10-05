@@ -5,8 +5,10 @@ import { erc20Abi } from 'viem';
 import { FEATURED_TOKENS, type Token } from '@/constants/tokens';
 import { ARC_TESTNET_CHAIN_ID, useTokenBalance, formatTokenAmount } from '@/hooks/useEcoSwap';
 
-/* ── Token Icon (gradient circle with first letter fallback) ── */
+/* ── Token Icon — real logo with gradient-circle fallback ── */
 export function TokenIcon({ token, size = 32 }: { token: Token; size?: number }) {
+  const [imgFailed, setImgFailed] = useState(false);
+
   const colors: Record<string, string[]> = {
     USDC: ['#2775CA', '#1A56DB'],
     EURC: ['#0052B4', '#003f8a'],
@@ -14,26 +16,47 @@ export function TokenIcon({ token, size = 32 }: { token: Token; size?: number })
   };
   const pair = colors[token.symbol] ?? [token.color ?? '#3D5C50', '#14B8A6'];
   const label = token.symbol.slice(0, 1).toUpperCase();
+
+  const containerStyle: React.CSSProperties = {
+    width: size,
+    height: size,
+    minWidth: size,
+    minHeight: size,
+    borderRadius: '50%',
+    overflow: 'hidden',
+    flexShrink: 0,
+    flexGrow: 0,
+    position: 'relative',
+    userSelect: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+
+  // Show real logo if available and not broken
+  if (token.logoURI && !imgFailed) {
+    return (
+      <div aria-label={token.symbol} style={{ ...containerStyle, background: 'transparent' }}>
+        <img
+          src={token.logoURI}
+          alt={token.symbol}
+          width={size}
+          height={size}
+          style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', display: 'block' }}
+          onError={() => setImgFailed(true)}
+        />
+      </div>
+    );
+  }
+
+  // Fallback: gradient circle with first letter
   return (
     <div
       aria-label={token.symbol}
       style={{
-        width: size,
-        height: size,
-        minWidth: size,
-        minHeight: size,
-        borderRadius: '50%',
+        ...containerStyle,
         background: `linear-gradient(135deg, ${pair[0]}, ${pair[1]})`,
         boxShadow: `0 2px 8px ${pair[0]}40`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        overflow: 'hidden',
-        flexShrink: 0,
-        flexGrow: 0,
-        /* Text */
-        userSelect: 'none',
-        position: 'relative',
       }}
     >
       <span style={{
@@ -68,7 +91,7 @@ function TokenRow({
   const { balance } = useTokenBalance(token.address, userAddress);
   return (
     <button
-      onClick={() => { onSelect(token); onClose(); }}
+      onClick={() => { saveRecent(token); onSelect(token); onClose(); }}
       className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-left transition-all table-row-hover"
       style={{
         background: selected ? 'var(--surface-hover)' : 'transparent',
@@ -162,10 +185,21 @@ interface TokenSelectorProps {
   userAddress?: `0x${string}`;
 }
 
+// Persist up to 5 recently used tokens in localStorage
+function loadRecents(): Token[] {
+  try { return JSON.parse(localStorage.getItem('ecoswap_recent_tokens') ?? '[]') as Token[]; }
+  catch { return []; }
+}
+function saveRecent(token: Token) {
+  const prev = loadRecents().filter((t) => t.address.toLowerCase() !== token.address.toLowerCase());
+  localStorage.setItem('ecoswap_recent_tokens', JSON.stringify([token, ...prev].slice(0, 5)));
+}
+
 export default function TokenSelector({ selected, onSelect, exclude, onClose, userAddress }: TokenSelectorProps) {
   const [query, setQuery] = useState('');
   const [customToken, setCustomToken] = useState<Token | null>(null);
   const [loadingAddress, setLoadingAddress] = useState('');
+  const [recentTokens] = useState<Token[]>(() => loadRecents());
 
   const isAddress = (s: string) => /^0x[0-9a-fA-F]{40}$/.test(s);
 
@@ -250,6 +284,34 @@ export default function TokenSelector({ selected, onSelect, exclude, onClose, us
         <div className="overflow-y-auto flex-1 px-3 pb-6">
           {!loadingAddress && (
             <>
+              {/* Recent tokens quick-pick row */}
+              {recentTokens.length > 0 && !query && (
+                <div className="px-2 pb-3 pt-1">
+                  <div className="text-[10px] font-extrabold uppercase tracking-widest mb-2" style={{ color: 'var(--subtle)' }}>
+                    Recent
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    {recentTokens
+                      .filter((t) => t.address.toLowerCase() !== exclude?.address.toLowerCase())
+                      .slice(0, 4)
+                      .map((t) => (
+                        <button
+                          key={t.address}
+                          onClick={() => { saveRecent(t); onSelect(t); onClose(); }}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl transition-all hover:scale-105"
+                          style={{
+                            background: 'var(--surface-muted)',
+                            border: '1px solid var(--border)',
+                            color: 'var(--ink)',
+                          }}
+                        >
+                          <TokenIcon token={t} size={18} />
+                          <span className="text-xs font-bold">{t.symbol}</span>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
               <div className="px-2 pb-2 pt-1">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest" style={{ color: 'var(--subtle)' }}>
                   ✦ Featured tokens

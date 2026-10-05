@@ -23,6 +23,8 @@ export const FEATURED_TOKENS: Token[] = [
     decimals: 6,
     verified: true,
     color: '#2775CA',
+    // Official USDC logo from Circle's CDN
+    logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png',
   },
   {
     address: '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a',
@@ -31,6 +33,8 @@ export const FEATURED_TOKENS: Token[] = [
     decimals: 6,
     verified: true,
     color: '#1A56DB',
+    // Official EURC logo from Circle's CDN
+    logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c/logo.png',
   },
   {
     address: '0xe9185F0c5F296Ed1797AaE4238D26CCaBEadb86C',
@@ -39,6 +43,8 @@ export const FEATURED_TOKENS: Token[] = [
     decimals: 6,
     verified: true,
     color: '#6B46C1',
+    // Hashnote USYC logo
+    logoURI: 'https://assets.coingecko.com/coins/images/33413/small/usyc.png',
   },
 ];
 
