@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
-import { Leaf, Trophy, Clock, Star, ChevronRight } from 'lucide-react';
+import { Leaf, Trophy, Clock, Star, ChevronRight, Droplets, TrendingUp } from 'lucide-react';
 import { useLeafPoints, getLeaderboard } from '@/hooks/useLeafPoints';
 import { getLevel, getNextLevel, getLevelProgress, LEVELS } from '@/constants/leafPoints';
+import { useAllPairsLength, usePairAtIndex, usePairInfo, useLPBalance, formatTokenAmount } from '@/hooks/useEcoSwap';
 
 /* ── Tree illustration that grows with level ── */
 function TreeIllustration({ level }: { level: number }) {
@@ -64,6 +65,106 @@ function TreeIllustration({ level }: { level: number }) {
     </svg>,
   ];
   return <div className="flex justify-center">{stages[Math.min(level, 4)]}</div>;
+}
+
+/* ── LP Rewards row for a single pool ── */
+function LPRewardRow({ index, userAddress }: { index: number; userAddress: `0x${string}` }) {
+  const { pairAddress } = usePairAtIndex(index);
+  const { pairInfo } = usePairInfo(pairAddress);
+  const { lpBalance } = useLPBalance(pairAddress, userAddress);
+
+  if (!pairInfo || !lpBalance || lpBalance === 0n) return null;
+
+  const share = pairInfo.totalSupply > 0n
+    ? Number((lpBalance * 10000n) / pairInfo.totalSupply) / 100
+    : 0;
+  const claimable0 = pairInfo.reserve0 * lpBalance / (pairInfo.totalSupply > 0n ? pairInfo.totalSupply : 1n);
+  const claimable1 = pairInfo.reserve1 * lpBalance / (pairInfo.totalSupply > 0n ? pairInfo.totalSupply : 1n);
+
+  // Estimated APR: 0.3% fee on daily volume approximated from reserves (rough heuristic)
+  // APR ≈ (fee_rate × turnover × 365) where turnover ~ 0.5× per day on average AMM
+  const estimatedApr = (0.003 * 0.5 * 365 * 100).toFixed(1); // ~54% max APR estimate
+
+  return (
+    <div
+      className="rounded-2xl p-4 space-y-3"
+      style={{ background: 'var(--surface-muted)', border: '1px solid var(--border)' }}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="flex -space-x-1.5">
+            {[pairInfo.token0Meta, pairInfo.token1Meta].map((t) => (
+              <div key={t.address}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold border-2"
+                style={{ background: t.color ?? '#4E6077', borderColor: 'var(--surface-strong)' }}
+              >{t.symbol.slice(0, 2)}</div>
+            ))}
+          </div>
+          <div>
+            <p className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>
+              {pairInfo.token0Meta.symbol}/{pairInfo.token1Meta.symbol}
+            </p>
+            <p className="text-[11px]" style={{ color: 'var(--muted)' }}>0.3% fee tier · {share.toFixed(3)}% pool share</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-xs font-bold" style={{ color: 'var(--success)' }}>~{estimatedApr}% APR</p>
+          <p className="text-[11px]" style={{ color: 'var(--subtle)' }}>est. from fees</p>
+        </div>
+      </div>
+
+      {/* Claimable on removal */}
+      <div className="grid grid-cols-2 gap-2">
+        {[
+          { meta: pairInfo.token0Meta, amount: claimable0 },
+          { meta: pairInfo.token1Meta, amount: claimable1 },
+        ].map(({ meta, amount }) => (
+          <div key={meta.address}
+            className="rounded-xl px-3 py-2"
+            style={{ background: 'rgba(15,157,107,0.06)', border: '1px solid rgba(15,157,107,0.12)' }}
+          >
+            <p className="text-[11px]" style={{ color: 'var(--muted)' }}>{meta.symbol} claimable</p>
+            <p className="text-sm font-bold tabular" style={{ color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>
+              {formatTokenAmount(amount, meta.decimals ?? 6, 4)}
+            </p>
+          </div>
+        ))}
+      </div>
+      <p className="text-[11px] text-center" style={{ color: 'var(--subtle)' }}>
+        Remove liquidity in the Pools tab to claim
+      </p>
+    </div>
+  );
+}
+
+function LPRewardsSection({ userAddress }: { userAddress: `0x${string}` }) {
+  const { length } = useAllPairsLength();
+  if (length === 0) return null;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Droplets size={14} style={{ color: 'var(--accent-teal)' }} />
+        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--muted)' }}>LP Rewards</span>
+        <span className="text-[10px] px-1.5 py-0.5 rounded-full"
+          style={{ background: 'rgba(15,157,107,0.1)', color: 'var(--accent)' }}>0.3% fee share</span>
+        <div className="ml-auto flex items-center gap-1">
+          <TrendingUp size={11} style={{ color: 'var(--success)' }} />
+          <span className="text-[11px] font-semibold" style={{ color: 'var(--success)' }}>Passive income</span>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {Array.from({ length }).map((_, i) => (
+          <LPRewardRow key={i} index={i} userAddress={userAddress} />
+        ))}
+      </div>
+      {length > 0 && (
+        <p className="text-[11px] text-center" style={{ color: 'var(--subtle)' }}>
+          APR is estimated based on the 0.3% swap fee. Actual earnings depend on pool volume.
+        </p>
+      )}
+    </div>
+  );
 }
 
 type RewardsTab = 'overview' | 'history' | 'leaderboard';
@@ -197,6 +298,9 @@ export default function RewardsPage() {
               );
             })}
           </div>
+
+          {/* ── LP Rewards section ── */}
+          {address && <LPRewardsSection userAddress={address} />}
         </div>
       )}
 

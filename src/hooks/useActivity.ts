@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export type ActivityType = 'swap' | 'add_liquidity' | 'remove_liquidity' | 'create_pool';
+export type ActivityType = 'swap' | 'add_liquidity' | 'remove_liquidity' | 'create_pool' | 'bridge';
 
 export interface ActivityItem {
   id: string;
@@ -10,6 +10,11 @@ export interface ActivityItem {
   timestamp: number;
   chainId: number;
   explorerBase: string;
+  // optional enrichment for bridge entries
+  amount?: string;
+  token?: string;
+  fromChain?: string;
+  toChain?: string;
 }
 
 const MAX_ITEMS = 50;

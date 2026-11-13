@@ -43,6 +43,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   onboarding:  'var(--accent-teal)',
   trading:     'var(--accent)',
   liquidity:   '#818CF8',
+  bridge:      '#8B5CF6',
   exploration: 'var(--warning)',
   social:      '#F472B6',
 };
@@ -157,13 +158,14 @@ export default function QuestsPage({ onNavigate: _onNavigate }: { onNavigate?: (
       )}
 
       {/* Quest cards by category */}
-      {(['onboarding', 'trading', 'liquidity', 'exploration', 'social'] as const).map((cat) => {
+      {(['onboarding', 'trading', 'liquidity', 'bridge', 'exploration', 'social'] as const).map((cat) => {
         const catQuests = quests.filter((q) => q.category === cat);
         if (catQuests.length === 0) return null;
         const catLabel: Record<string, string> = {
           onboarding: '🚀 Getting Started',
           trading: '🔄 Trading',
           liquidity: '💧 Liquidity',
+          bridge: '🌉 Bridge',
           exploration: '🎨 Exploration',
           social: '🐦 Social',
         };

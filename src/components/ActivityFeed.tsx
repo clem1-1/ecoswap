@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeftRight, Droplets, MinusCircle, PlusCircle, Clock, ExternalLink } from 'lucide-react';
+import { ArrowLeftRight, Droplets, MinusCircle, PlusCircle, Clock, ExternalLink, ArrowUpDown } from 'lucide-react';
 import { useActivity, type ActivityType } from '@/hooks/useActivity';
 
 const iconMap: Record<ActivityType, React.ReactNode> = {
@@ -7,6 +7,7 @@ const iconMap: Record<ActivityType, React.ReactNode> = {
   add_liquidity:    <Droplets size={14} />,
   remove_liquidity: <MinusCircle size={14} />,
   create_pool:      <PlusCircle size={14} />,
+  bridge:           <ArrowUpDown size={14} />,
 };
 
 const labelMap: Record<ActivityType, string> = {
@@ -14,6 +15,7 @@ const labelMap: Record<ActivityType, string> = {
   add_liquidity:    'Add Liquidity',
   remove_liquidity: 'Remove Liquidity',
   create_pool:      'Pool Created',
+  bridge:           'Bridge',
 };
 
 const colorMap: Record<ActivityType, string> = {
@@ -21,6 +23,7 @@ const colorMap: Record<ActivityType, string> = {
   add_liquidity:    '#10B981',
   remove_liquidity: '#F59E0B',
   create_pool:      '#14B8A6',
+  bridge:           '#8B5CF6',
 };
 
 const bgMap: Record<ActivityType, string> = {
@@ -28,6 +31,7 @@ const bgMap: Record<ActivityType, string> = {
   add_liquidity:    'rgba(16,185,129,0.10)',
   remove_liquidity: 'rgba(245,158,11,0.10)',
   create_pool:      'rgba(20,184,166,0.10)',
+  bridge:           'rgba(139,92,246,0.10)',
 };
 
 function formatTime(ts: number): string {
@@ -42,6 +46,7 @@ type FilterType = ActivityType | 'all';
 const FILTER_OPTIONS: { id: FilterType; label: string }[] = [
   { id: 'all',             label: 'All' },
   { id: 'swap',            label: 'Swaps' },
+  { id: 'bridge',          label: 'Bridge' },
   { id: 'add_liquidity',   label: 'Add Liq.' },
   { id: 'remove_liquidity',label: 'Remove' },
   { id: 'create_pool',     label: 'Pools' },
@@ -144,12 +149,20 @@ export default function ActivityFeed() {
                 </span>
               </div>
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-medium truncate" style={{ color: 'var(--ink-2)' }}>
-                  {item.description}
-                </p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate" style={{ color: 'var(--ink-2)' }}>
+                    {item.description}
+                  </p>
+                  {item.type === 'bridge' && item.fromChain && item.toChain && (
+                    <p className="text-[11px] mt-0.5" style={{ color: 'var(--muted)' }}>
+                      {item.fromChain} → {item.toChain}
+                      {item.amount && item.token ? ` · ${item.amount} ${item.token}` : ''}
+                    </p>
+                  )}
+                </div>
                 {item.txHash && (
                   <a
-                    href={`https://explorer.testnet.arc.io/tx/${item.txHash}`}
+                    href={`${item.explorerBase}/tx/${item.txHash}`}
                     target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-1 text-xs font-semibold flex-shrink-0 hover:opacity-70 transition-opacity"
                     style={{ color: 'var(--accent-teal)' }}

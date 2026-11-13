@@ -13,8 +13,7 @@ export interface Token {
   color?: string;    // brand color for the avatar (defaults to #6B6580)
 }
 
-// Arc Testnet native assets (Circle-issued)
-// Source: https://docs.arc.io/arc/references/contract-addresses
+// Arc Testnet tokens — all verified from https://docs.arc.io/arc/references/contract-addresses
 export const FEATURED_TOKENS: Token[] = [
   {
     address: '0x3600000000000000000000000000000000000000',
@@ -23,8 +22,7 @@ export const FEATURED_TOKENS: Token[] = [
     decimals: 6,
     verified: true,
     color: '#2775CA',
-    // Official USDC logo from Circle's CDN
-    logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png',
+    logoURI: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png',
   },
   {
     address: '0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a',
@@ -33,8 +31,7 @@ export const FEATURED_TOKENS: Token[] = [
     decimals: 6,
     verified: true,
     color: '#1A56DB',
-    // Official EURC logo from Circle's CDN
-    logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x1aBaEA1f7C830bD89Acc67eC4af516284b1bC33c/logo.png',
+    logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/20641.png',
   },
   {
     address: '0xe9185F0c5F296Ed1797AaE4238D26CCaBEadb86C',
@@ -43,8 +40,27 @@ export const FEATURED_TOKENS: Token[] = [
     decimals: 6,
     verified: true,
     color: '#6B46C1',
-    // Hashnote USYC logo
-    logoURI: 'https://assets.coingecko.com/coins/images/33413/small/usyc.png',
+    logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/25028.png',
+  },
+  {
+    // Circle wrapped Bitcoin on Arc — 8 decimals matching BTC precision
+    address: '0xf0C4a4CE82A5746AbAAd9425360Ab04fbBA432BF',
+    symbol: 'cirBTC',
+    name: 'Circle Wrapped Bitcoin',
+    decimals: 8,
+    verified: true,
+    color: '#F7931A',
+    logoURI: 'https://cryptologos.cc/logos/wrapped-bitcoin-wbtc-logo.png',
+  },
+  {
+    // Bridged WETH on Arc — lock ETH on Ethereum, mint on Arc
+    address: '0x2c4047028a72803939b6fb674D01bC059B5C4961',
+    symbol: 'WETH',
+    name: 'Wrapped Ether',
+    decimals: 18,
+    verified: true,
+    color: '#627EEA',
+    logoURI: 'https://cryptologos.cc/logos/ethereum-eth-logo.png',
   },
 ];
 

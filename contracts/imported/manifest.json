@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "files": {
+    "/home/user/app/contracts/imported/0x3df3966f5138143dce7a9cfddc2c0310ce083bb1/src/core/XyloStablePool.sol": {
+      "sha256": "12d163369c47ed491f85d765879db863cf125b8714a481c81013b3cd6bb87af5",
+      "address": "0x3df3966f5138143dce7a9cfddc2c0310ce083bb1",
+      "chain": "Arc_Testnet",
+      "fetchedAt": "2026-10-23T22:22:13.940Z"
+    },
+    "/home/user/app/contracts/imported/0x3df3966f5138143dce7a9cfddc2c0310ce083bb1/src/core/XyloERC20.sol": {
+      "sha256": "d57c4ae69ce79ab1196b405e0ff997417b4206ae10e0bf6936ae7bc58079c677",
+      "address": "0x3df3966f5138143dce7a9cfddc2c0310ce083bb1",
+      "chain": "Arc_Testnet",
+      "fetchedAt": "2026-10-23T22:22:13.940Z"
+    },
+    "/home/user/app/contracts/imported/0x3df3966f5138143dce7a9cfddc2c0310ce083bb1/src/interfaces/IERC20.sol": {
+      "sha256": "d8b7e5e003fdc59cb50a1fdd13deeae0d40aaffbcb3f05cf5aff05a390f1c17b",
+      "address": "0x3df3966f5138143dce7a9cfddc2c0310ce083bb1",
+      "chain": "Arc_Testnet",
+      "fetchedAt": "2026-10-23T22:22:13.940Z"
+    },
+    "/home/user/app/contracts/imported/0x3df3966f5138143dce7a9cfddc2c0310ce083bb1/src/interfaces/IXyloPool.sol": {
+      "sha256": "da340136078df99e140844a12d5075cefc003f60b8eeb89378baa39fddb0f7c1",
+      "address": "0x3df3966f5138143dce7a9cfddc2c0310ce083bb1",
+      "chain": "Arc_Testnet",
+      "fetchedAt": "2026-10-23T22:22:13.940Z"
+    }
+  }
+}

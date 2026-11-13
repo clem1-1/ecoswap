@@ -16,7 +16,7 @@ export interface Quest {
   leafReward: number;
   /** How to detect completion — 'manual' means user-triggered (e.g. theme toggle) */
   detectFn: (ctx: QuestContext) => boolean;
-  category: 'onboarding' | 'trading' | 'liquidity' | 'social' | 'exploration';
+  category: 'onboarding' | 'trading' | 'liquidity' | 'bridge' | 'social' | 'exploration';
 }
 
 export interface QuestContext {
@@ -104,6 +104,60 @@ export const QUESTS: Quest[] = [
     leafReward: 50,
     category: 'liquidity',
     detectFn: (ctx) => ctx.activityItems.some((i) => i.type === 'create_pool'),
+  },
+  {
+    id: 'first_bridge',
+    icon: '🌉',
+    title: 'Bridge for the First Time',
+    description: 'Use the Bridge tab to transfer USDC or EURC across chains via Circle CCTP.',
+    leafReward: 40,
+    category: 'bridge',
+    detectFn: (ctx) => ctx.activityItems.some((i) => i.type === 'bridge'),
+  },
+  {
+    id: 'bridge_to_arc',
+    icon: '🔀',
+    title: 'Bridge to Arc Testnet',
+    description: 'Receive USDC on Arc Testnet from any other supported chain.',
+    leafReward: 30,
+    category: 'bridge',
+    detectFn: (ctx) =>
+      ctx.activityItems.some(
+        (i) => i.type === 'bridge' && i.toChain?.toLowerCase().includes('arc'),
+      ),
+  },
+  {
+    id: 'bridge_from_arc',
+    icon: '🚀',
+    title: 'Bridge Out of Arc',
+    description: 'Send USDC from Arc Testnet to another chain.',
+    leafReward: 30,
+    category: 'bridge',
+    detectFn: (ctx) =>
+      ctx.activityItems.some(
+        (i) => i.type === 'bridge' && i.fromChain?.toLowerCase().includes('arc'),
+      ),
+  },
+  {
+    id: 'bridge_eurc',
+    icon: '💶',
+    title: 'Bridge EURC',
+    description: 'Bridge EURC via CCTP — only possible from Arc Testnet.',
+    leafReward: 35,
+    category: 'bridge',
+    detectFn: (ctx) =>
+      ctx.activityItems.some(
+        (i) => i.type === 'bridge' && i.token === 'EURC',
+      ),
+  },
+  {
+    id: 'bridge_three_times',
+    icon: '🔁',
+    title: 'Bridge Three Times',
+    description: 'Complete three cross-chain bridge transfers.',
+    leafReward: 50,
+    category: 'bridge',
+    detectFn: (ctx) => ctx.activityItems.filter((i) => i.type === 'bridge').length >= 3,
   },
   {
     id: 'try_other_theme',

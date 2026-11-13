@@ -15,6 +15,7 @@ import {
 } from '@/hooks/useEcoSwap';
 import { ECOSWAP_POOL_ABI } from '@/constants/contracts';
 import { addActivity } from '@/hooks/useActivity';
+import { recordLPEntry } from '@/hooks/usePnL';
 
 // ─── Pool selector ─────────────────────────────────────────────────────────
 
@@ -234,6 +235,16 @@ export default function LiquidityTab({ initialPairAddress }: LiquidityTabProps) 
       txHash: step3Hash,
       chainId: ARC_TESTNET_CHAIN_ID,
       explorerBase: 'https://explorer.testnet.arc.io',
+    });
+    // Record entry for PnL tracking
+    recordLPEntry({
+      pairAddress: pairInfo.pairAddress,
+      symbol0: pairInfo.token0Meta.symbol,
+      symbol1: pairInfo.token1Meta.symbol,
+      entryAmount0: formatUnits(parsedA0, decimals0),
+      entryAmount1: formatUnits(parsedA1, decimals1),
+      entryLpTokens: '0',
+      entrySpotPrice: '1',
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step3Confirmed, step3Hash]);
